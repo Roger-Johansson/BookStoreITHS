@@ -1,0 +1,432 @@
+--**************************************************************************************************
+--Skapa databas
+--**************************************************************************************************
+--DROP DATABASE IF EXISTS BokhandelDb
+--GO
+
+--CREATE DATABASE BokhandelDb
+--GO
+
+--USE BokhandelDb
+--GO
+
+--**************************************************************************************************
+--Skapa tabell Författare
+--**************************************************************************************************
+--DROP TABLE IF EXISTS Författare
+--CREATE TABLE Författare
+--	(
+--		Id INT IDENTITY (1,1) PRIMARY KEY,
+--		[Förnamn] NVARCHAR(50) NOT NULL,
+--		[Efternamn] NVARCHAR(50) NOT NULL,
+--        [Födelsedatum] DATE NULL, -- yyyy-mm-dd om känt, annars NULL
+--        CONSTRAINT check_födelsedatum CHECK ([Födelsedatum] LIKE '[0-9][0-9][0-9][0-9][-][0-9][0-9][-][0-9][0-9]') -- måste vara tio siffror
+--	)
+-- GO
+
+--**************************************************************************************************
+--Skapa tabell Förlag
+--**************************************************************************************************
+--DROP TABLE IF EXISTS Förlag
+--CREATE TABLE Förlag
+--	(
+--		FörlagsId INT IDENTITY (1,1) PRIMARY KEY,
+--		[Förlagsnamn] NVARCHAR(MAX) NOT NULL,
+--		[Kontaktperson Förnamn] NVARCHAR(50) NOT NULL,
+--        [Kontaktperson Efternamn] NVARCHAR(50) NOT NULL,
+--		[Telefonnummer] NVARCHAR(10)
+--       --CONSTRAINT check_födelsedatum CHECK [Födelsedatum] LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' -- måste vara tio siffror
+--	)
+-- GO
+
+--**************************************************************************************************
+--Skapa tabell Varor
+--**************************************************************************************************
+--DROP TABLE IF EXISTS Varor
+--CREATE TABLE Varor
+--	(
+--		Produktnummer INT IDENTITY (1,1) PRIMARY KEY,
+--		ISBN13 NVARCHAR(13), -- TODO!!! bara 13 siffror. Tre första 978 eller 979. Kontrollberäkning enligt bokmärke.			
+--		[Titel] NVARCHAR(max),			-- FOREIGN KEY REFERENCES Countries(Id),
+--		[Språk] NVARCHAR(20),
+--		[Beskrivning] NVARCHAR(MAX),
+--		[Pris] INT NOT NULL,
+--		[Utgivningsdatum] DATE,   --yyyy-mm-dd. Hur CHECK?
+--		[FörfattarId] INT NOT NULL FOREIGN KEY REFERENCES Författare(Id),
+--		[Förlag] INT NOT NULL FOREIGN KEY REFERENCES Förlag(FörlagsId),
+--		--CONSTRAINT check_isbn13 CHECK ([ISBN13] LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]')
+--	)
+-- GO
+
+--**************************************************************************************************
+--Skapa tabell Bibliografier
+--**************************************************************************************************
+--DROP TABLE IF EXISTS Bibliografier
+--CREATE TABLE Bibliografier
+--(
+--		[FörfattarId] INT,
+--		[Produktnr] INT,
+--		CONSTRAINT PK_Bibliografier PRIMARY KEY ([FörfattarId], [Produktnr]),
+--		CONSTRAINT FK_FörfattareID FOREIGN KEY ([FörfattarId]) REFERENCES Författare(Id),
+--		CONSTRAINT FK_Varor_Prodnr FOREIGN KEY ([Produktnr]) REFERENCES Varor(Produktnummer)
+--)
+-- GO
+
+--**************************************************************************************************
+--Skapa tabell Butiker
+--**************************************************************************************************
+--DROP TABLE IF EXISTS Butiker
+--CREATE TABLE Butiker
+--	(
+--		Id INT IDENTITY (1,1) PRIMARY KEY,
+--		[Butiksnamn] NVARCHAR(50),
+--		[Gatunamn] NVARCHAR(50),
+--        [Gatunummer] NVARCHAR(50),
+--		[Postnummer] NVARCHAR(6), --Bestämma format på postnummer (xxx yy)
+--		[Postort] NVARCHAR(30)
+--      -- CONSTRAINT check_födelsedatum CHECK [Födelsedatum] LIKE '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' -- måste vara tio siffror
+--	)
+-- GO
+
+--**************************************************************************************************
+--Skapa tabell Lagersaldo
+--**************************************************************************************************
+----DROP TABLE IF EXISTS Lagersaldo
+--CREATE TABLE Lagersaldo
+--(
+--		[ButikID] INT,
+--		[Produktnummer] INT,
+--		[Antal] INT,
+--		CONSTRAINT PK_Lagersaldo PRIMARY KEY ([ButikId], [Produktnummer]),
+--		CONSTRAINT FK_ButikID FOREIGN KEY ([ButikId]) REFERENCES Butiker(ID),
+--		CONSTRAINT FK_Varor_Produktnr FOREIGN KEY ([Produktnummer]) REFERENCES Varor(Produktnummer),
+--)
+-- GO
+
+--**************************************************************************************************
+--Skapa tabell Kunder
+--**************************************************************************************************
+--DROP TABLE IF EXISTS Kunder
+--CREATE TABLE Kunder
+--(
+--		[KundID] INT PRIMARY KEY,
+--		[Förnamn] CHAR(50),
+--		[Efternamn] CHAR(50),
+--		[Gatunamn] NVARCHAR(MAX),
+--		[Gatunummer] INT,
+--		[Postnummer] NVARCHAR(6),
+--		[Postort] NVARCHAR(30)
+--)
+-- GO
+
+--**************************************************************************************************
+--Skapa tabell Ordrar
+--**************************************************************************************************
+--DROP TABLE IF EXISTS Ordrar
+--CREATE TABLE Ordrar
+--(
+--		[OrderID] INT IDENTITY(1,1) PRIMARY KEY,
+--		[KundID] INT FOREIGN KEY REFERENCES Kunder(KundID),
+--		[Skickas] BIT DEFAULT 1, --skickas = 1, hämtas i butik = 0
+--)
+-- GO
+
+--**************************************************************************************************
+--Skapa tabell Orderspecifikationer
+--**************************************************************************************************
+--DROP TABLE IF EXISTS Orderspecifikationer
+--CREATE TABLE Orderspecifikationer
+--(
+--		[OrderspecID] INT IDENTITY(1,1) PRIMARY KEY,
+--		[OrderID] INT FOREIGN KEY REFERENCES Ordrar(OrderID),
+--		[Produktnummer] INT FOREIGN KEY REFERENCES Varor(Produktnummer), --13 tecken för produktnummer borde räcka så detta täcker ISBN13 och nya Handelsvaror
+--		[Kvantitet] INT DEFAULT 0,
+--)
+-- GO
+
+--**************************************************************************************************
+-- Fyller i Författare
+--**************************************************************************************************
+--INSERT INTO Författare ([Förnamn], [Efternamn], [Födelsedatum]) VALUES('Carl','Jung','1875-07-26');
+--INSERT INTO Författare ([Förnamn], [Efternamn], [Födelsedatum]) VALUES('Friedrich','Nietzsche','1844-10-05');
+--INSERT INTO Författare ([Förnamn], [Efternamn], [Födelsedatum]) VALUES('Jordan','Peterson','1962-06-12');
+--INSERT INTO Författare ([Förnamn], [Efternamn], [Födelsedatum]) VALUES('Erik','Varden','1974-05-13');
+-- GO
+
+--**************************************************************************************************
+-- Fyller i Förlag
+--**************************************************************************************************
+--INSERT INTO Förlag ([Förlagsnamn], [Kontaktperson Förnamn], [Kontaktperson Efternamn], [Telefonnummer])
+--				VALUES('Silentium Skrifter','Herbert', 'Andersson', '0709778123');
+--INSERT INTO Förlag ([Förlagsnamn], [Kontaktperson Förnamn], [Kontaktperson Efternamn], [Telefonnummer])
+--				VALUES('Bokförlaget Korpen','Kent', 'Johansson', '0737098159');
+--INSERT INTO Förlag ([Förlagsnamn], [Kontaktperson Förnamn], [Kontaktperson Efternamn], [Telefonnummer])
+--				VALUES('Rabén Prisma','Jack', 'Svensson', '0737981756');
+--INSERT INTO Förlag ([Förlagsnamn], [Kontaktperson Förnamn], [Kontaktperson Efternamn], [Telefonnummer])
+--				VALUES('Forum', 'Tove', 'Nygren', '0709798513');
+--INSERT INTO Förlag ([Förlagsnamn], [Kontaktperson Förnamn], [Kontaktperson Efternamn], [Telefonnummer])
+--				VALUES('Harvest books', 'Tove', 'Nygren', '0709798513');
+--INSERT INTO Förlag ([Förlagsnamn], [Kontaktperson Förnamn], [Kontaktperson Efternamn], [Telefonnummer])
+--				VALUES('Mondial', 'Jill', 'Jönsson', '0709234211');
+--INSERT INTO Förlag ([Förlagsnamn], [Kontaktperson Förnamn], [Kontaktperson Efternamn], [Telefonnummer])
+--				VALUES('Natur och kultur', 'Tommy', 'Andersson', '0709978915');
+-- GO
+
+--**************************************************************************************************
+-- Fyller i Varor
+--**************************************************************************************************
+--INSERT INTO Varor ([ISBN13], [Titel], [Språk], [Beskrivning], [Pris], [Utgivningsdatum], [FörfattarID], [Förlag])
+--					VALUES('9789198624502','Allt som är värt att minnas', 'Svenska', 'Bok', '149', '2020-08-01', 4, 1);
+--INSERT INTO Varor ([ISBN13], [Titel], [Språk], [Beskrivning], [Pris], [Utgivningsdatum], [FörfattarID], [Förlag])
+--					VALUES('9789173745437','Den glada vetenskapen', 'Svenska', 'Bok', '89', '1987-06-30', 2, 2);
+--INSERT INTO Varor ([ISBN13], [Titel], [Språk], [Beskrivning], [Pris], [Utgivningsdatum], [FörfattarID], [Förlag])
+--					VALUES('9789151834146','Om historiens nytta och skada', 'Svenska', 'Bok', '189', '1998-06-01', 2, 3);
+--INSERT INTO Varor ([ISBN13], [Titel], [Språk], [Beskrivning], [Pris], [Utgivningsdatum], [FörfattarID], [Förlag])
+--					VALUES('9789137075764','Så talade Zarathustra', 'Svenska', 'Bok', '55', '1993-10-01', 2, 4);
+--INSERT INTO Varor ([ISBN13], [Titel], [Språk], [Beskrivning], [Pris], [Utgivningsdatum], [FörfattarID], [Förlag])
+--					VALUES('9789188671479','12 livsregler - ett motgift mot kaos', 'Svenska', 'Bok', '159', '2018-09-06', 3, 6);
+--INSERT INTO Varor ([ISBN13], [Titel], [Språk], [Beskrivning], [Pris], [Utgivningsdatum], [FörfattarID], [Förlag])
+--					VALUES('9780156612062','Modern man in search of a soul', 'Engelska', 'Bok', '79', '2002-02-03', 1, 5);
+--INSERT INTO Varor ([ISBN13], [Titel], [Språk], [Beskrivning], [Pris], [Utgivningsdatum], [FörfattarID], [Förlag])
+--					VALUES('9789127033573','Psykologiska typer', 'Svenska', 'Bok', '229', '1993-05-25', 1, 7);
+--INSERT INTO Varor ([ISBN13], [Titel], [Språk], [Beskrivning], [Pris], [Utgivningsdatum], [FörfattarID], [Förlag])
+--					VALUES('9789127021853','Psykets dynamik och struktur', 'Svenska', 'Bok', '229', '1991-02-16', 1, 7);
+--INSERT INTO Varor ([ISBN13], [Titel], [Språk], [Beskrivning], [Pris], [Utgivningsdatum], [FörfattarID], [Förlag])
+--					VALUES('9789146151478','Jaget och det omedvetna', 'Svenska', 'Bok', '49', '1986-10-16', 1, 7);
+--INSERT INTO Varor ([ISBN13], [Titel], [Språk], [Beskrivning], [Pris], [Utgivningsdatum], [FörfattarID], [Förlag])
+--					VALUES('9781138687424','Psychological types', 'Engelska', 'Bok', '199', '2017-12-24', 1, 5);
+--INSERT INTO Varor ([ISBN13], [Titel], [Språk], [Beskrivning], [Pris], [Utgivningsdatum], [FörfattarID], [Förlag])
+--					VALUES('0000000000001','Pennfack med motiv av Jung med pipa', 'NA', 'Handelsvara', '29', '2021-12-20', 1, 5);
+--INSERT INTO Varor ([ISBN13], [Titel], [Språk], [Beskrivning], [Pris], [Utgivningsdatum], [FörfattarID], [Förlag])
+--					VALUES('0000000000002','Samlarfigur föreställande Erik Varden i munkkåpa', 'NA', 'Handelsvara', '209', '2020-01-10', 1, 1);
+-- GO
+
+--**************************************************************************************************
+-- Fyller i Butiker
+--**************************************************************************************************
+--INSERT INTO Butiker ([Butiksnamn], [Gatunamn], [Gatunummer], [Postnummer], [Postort])
+--				VALUES('Börjes böcker och saker', 'Östra Västergatan', '10', '434 66', 'Uppsala');
+--INSERT INTO Butiker ([Butiksnamn], [Gatunamn], [Gatunummer], [Postnummer], [Postort])
+--				VALUES('Berits böcker och saker', 'Vädergatan', '3', '213 48', 'Malmö');
+--INSERT INTO Butiker ([Butiksnamn], [Gatunamn], [Gatunummer], [Postnummer], [Postort])
+--				VALUES('Hens böcker och saker', 'Ovädersgatan', '42', '676 11', 'Ludvika');
+-- GO
+
+--**************************************************************************************************
+-- Fyller i Lagersaldo
+--**************************************************************************************************
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(1, 1, 10);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(2, 3, 17);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(3, 2, 11);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(2, 4, 5);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(1, 5, 1);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(3, 6, 23);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(2, 7, 2);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(3, 7, 1);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(2, 8, 50);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(1, 8, 23);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(3, 8, 3);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(1, 9, 2);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(2, 9, 1);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(3, 10, 1);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(3, 11, 18);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(3, 12, 7);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(2, 11, 1);
+--INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(1, 12, 2);
+-- GO
+
+--**************************************************************************************************
+-- Fyller i Kunder
+--**************************************************************************************************
+--INSERT INTO Kunder ([KundID], [Förnamn], [Efternamn], [Gatunamn], [Gatunummer], [Postnummer], [Postort])
+--				VALUES(1, 'Harry','Houdini', 'Kvibillevägen', '3', '453 78', 'Uddevalla');
+--INSERT INTO Kunder ([KundID], [Förnamn], [Efternamn], [Gatunamn], [Gatunummer], [Postnummer], [Postort])
+--				VALUES(2, 'Harriet','Hansson', 'Eftervägen', '1', '444 87', 'Leråkra');
+--INSERT INTO Kunder ([KundID], [Förnamn], [Efternamn], [Gatunamn], [Gatunummer], [Postnummer], [Postort])
+--				VALUES(3, 'Kjell','Brel', 'Förevägen', '111', '567 90', 'Lervälling');
+--INSERT INTO Kunder ([KundID], [Förnamn], [Efternamn], [Gatunamn], [Gatunummer], [Postnummer], [Postort])
+--				VALUES(4, 'Kurt','Olsson', 'Bredvidvägen', '42', '668 23', 'Ankeborg');
+--INSERT INTO Kunder ([KundID], [Förnamn], [Efternamn], [Gatunamn], [Gatunummer], [Postnummer], [Postort])
+--				VALUES(5, 'Karin','Månsdotter', 'Kungliga vägen', '1', '112 21', 'Stockholm');
+-- GO
+
+--**************************************************************************************************
+-- Fyller i Ordrar
+--**************************************************************************************************
+--INSERT INTO Ordrar ([KundID], [Skickas])
+--				VALUES(1, 1);
+--INSERT INTO Ordrar ([KundID], [Skickas])
+--				VALUES(2, 1);
+--INSERT INTO Ordrar ([KundID], [Skickas])
+--				VALUES(3, 1);
+--INSERT INTO Ordrar ([KundID], [Skickas])
+--				VALUES(4, 1);
+--INSERT INTO Ordrar ([KundID], [Skickas])
+--				VALUES(4, 1);
+--INSERT INTO Ordrar ([KundID], [Skickas])
+--				VALUES(5, 1);
+-- GO
+
+--**************************************************************************************************
+-- Fyller i Orderspecifikationer
+--**************************************************************************************************
+--INSERT INTO Orderspecifikationer ([OrderID], [Produktnummer], [Kvantitet])
+--				VALUES( 1, 1, 2);
+--INSERT INTO Orderspecifikationer ([OrderID], [Produktnummer], [Kvantitet])
+--				VALUES( 2, 2, 3);
+--INSERT INTO Orderspecifikationer ([OrderID], [Produktnummer], [Kvantitet])
+--				VALUES( 3, 1, 1);
+--INSERT INTO Orderspecifikationer ([OrderID], [Produktnummer], [Kvantitet])
+--				VALUES( 4, 7, 1);
+--INSERT INTO Orderspecifikationer ([OrderID], [Produktnummer], [Kvantitet])
+--				VALUES( 5, 9, 1);
+--INSERT INTO Orderspecifikationer ([OrderID], [Produktnummer], [Kvantitet])
+--				VALUES( 6, 9, 2);
+--INSERT INTO Orderspecifikationer ([OrderID], [Produktnummer], [Kvantitet])
+--				VALUES( 6, 10, 4);
+-- GO
+
+--**************************************************************************************************
+-- Fyller i Bibliografier
+--**************************************************************************************************
+--INSERT INTO Bibliografier ([FörfattarId], [Produktnr])
+--				VALUES(1, 6);
+--INSERT INTO Bibliografier ([FörfattarId], [Produktnr])
+--				VALUES(1, 7);
+--INSERT INTO Bibliografier ([FörfattarId], [Produktnr])
+--				VALUES(1, 8);
+--INSERT INTO Bibliografier ([FörfattarId], [Produktnr])
+--				VALUES(1, 9);
+--INSERT INTO Bibliografier ([FörfattarId], [Produktnr])
+--				VALUES(1, 10);
+--INSERT INTO Bibliografier ([FörfattarId], [Produktnr])
+--				VALUES(2, 2);
+--INSERT INTO Bibliografier ([FörfattarId], [Produktnr])
+--				VALUES(2, 3);
+--INSERT INTO Bibliografier ([FörfattarId], [Produktnr])
+--				VALUES(2, 4);
+--INSERT INTO Bibliografier ([FörfattarId], [Produktnr])
+--				VALUES(3, 5);
+--INSERT INTO Bibliografier ([FörfattarId], [Produktnr])
+--				VALUES(4, 1);
+-- GO
+
+--**************************************************************************************************
+-- Skapa Vy TitlarPerFörfattare ......
+--**************************************************************************************************
+--DROP VIEW TitlarPerFörfattare;
+--CREATE VIEW TitlarPerFörfattare 
+--AS 
+--SELECT	CONCAT(Författare.[Förnamn], ' ',Författare.[Efternamn]) AS [Namn],
+----		CONCAT(FLOOR((CAST (GETDATE() AS INTEGER) - CAST(Författare.[Födelsedatum] AS INTEGER)) / 365.25),' ' , 'år') AS [Ålder],
+--		CONCAT(FLOOR(DATEDIFF(DAY, Författare.[Födelsedatum] , GETDATE()) / 365.25), ' ', 'år') AS [Ålder (> 100 troligen död ;))],
+--		CONCAT(COUNT(Författare.Id), ' ', 'st.') AS [Titlar],
+--		CONCAT(SUM(Varor.[Pris] * Lagersaldo.[Antal]), ' ', 'kr') AS [Lagervärde] -- summa (bokpris * antal)
+--FROM Författare
+--			JOIN Bibliografier ON FörfattarId = Författare.Id
+--			JOIN Varor ON Bibliografier.[Produktnr] = Varor.[Produktnummer]
+--			JOIN Lagersaldo ON Lagersaldo.[Produktnummer] = Varor.[Produktnummer]
+--GROUP BY Förnamn, Efternamn, Födelsedatum, Id
+--GO
+
+--SELECT * FROM TitlarPerFörfattare
+
+--**************************************************************************************************
+-- Skapa Vy HetaProdukter Varor, Ordrar, Orderspecifikationer. Kan användas av personalen
+-- för att hitta tips till kunder om vad som säljer bäst.
+--**************************************************************************************************
+--DROP VIEW HetaProdukter;
+--CREATE VIEW HetaProdukter 
+--AS 
+--SELECT TOP 5 CONCAT(Författare.[Förnamn], ' ',Författare.[Efternamn]) AS [Författare],
+--		Varor.[Titel] AS [Titel],
+--		CONCAT(SUM(Kvantitet), ' ', 'st.') AS [Antal]
+--FROM ORDRAR
+--			JOIN Orderspecifikationer ON Ordrar.[OrderID] = Orderspecifikationer.[OrderID]
+--			JOIN Varor ON Orderspecifikationer.[Produktnummer] = Varor.[Produktnummer]
+--			JOIN Författare ON Varor.[FörfattarID] = Författare.[Id]
+--GROUP BY Varor.[Titel], Författare.[Förnamn], Författare.[Efternamn]
+--ORDER BY [Antal] DESC
+--GO
+
+--SELECT * FROM HetaProdukter;
+
+--**************************************************************************************************
+-- Skapa Stored Procedure FlyttaBok
+--**************************************************************************************************
+
+--DROP PROCEDURE FlyttaBok;
+--CREATE PROCEDURE FlyttaBok @frånButik AS INT,
+--						   @tillButik AS INT,
+--						   @ISBN AS VARCHAR(13),
+--						   @antal AS INT = 1
+--AS
+---- kolla först om det finns tillräckligt många varor i @frånButik
+--IF((SELECT Antal FROM Lagersaldo
+--JOIN Varor ON Varor.[Produktnummer] = Lagersaldo.[Produktnummer]
+--WHERE Varor.[ISBN13] = @ISBN AND
+--Lagersaldo.[ButikID] = @frånButik) >= @antal)
+--BEGIN
+--	DECLARE @tempAntal INT = 0;
+--	DECLARE @produktNummer INT = 0;
+----	ta reda på antalet böcker i lager i @frånButik och dra ifrån antalet som skall flyttas
+--	SET @tempAntal = (SELECT Antal FROM Lagersaldo
+--							JOIN Varor ON Varor.[Produktnummer] = Lagersaldo.[Produktnummer]
+--							WHERE Varor.[ISBN13] = @ISBN AND
+--							Lagersaldo.[ButikID] = @frånButik) - @antal
+----	ta reda på produktnumret utifrån ISBN13 alt ISBN13 för prylar
+--	SET @produktNummer = (SELECT Lagersaldo.[Produktnummer] FROM Lagersaldo
+--							JOIN Varor ON Varor.[Produktnummer] = Lagersaldo.[Produktnummer]
+--							WHERE Varor.[ISBN13] = @ISBN AND
+--							Lagersaldo.[ButikID] = @frånButik)
+--	BEGIN TRAN;
+--	UPDATE Lagersaldo
+--	SET Antal = @tempAntal
+--	WHERE ButikID = @frånButik AND Lagersaldo.[Produktnummer] = @produktNummer
+
+--	SET @tempAntal = (SELECT Antal FROM Lagersaldo
+--							JOIN Varor ON Varor.[Produktnummer] = Lagersaldo.[Produktnummer]
+--							WHERE Varor.[ISBN13] = @ISBN AND
+--							Lagersaldo.[ButikID] = @tillButik) + @antal
+	
+--	UPDATE Lagersaldo
+--	SET Antal = @tempAntal
+--	WHERE ButikID = @tillButik AND Lagersaldo.[Produktnummer] = @produktNummer
+--	COMMIT TRAN;
+--	--Måste kolla om produkten finns i butiken den skall flyttas till. Annars INSERT
+--	IF NOT EXISTS
+--	(SELECT Antal FROM Lagersaldo
+--							JOIN Varor ON Varor.[Produktnummer] = Lagersaldo.[Produktnummer]
+--							WHERE Varor.[ISBN13] = @ISBN AND
+--							Lagersaldo.[ButikID] = @tillButik
+--	)
+--	BEGIN
+--		INSERT INTO Lagersaldo ([ButikID], [Produktnummer], [Antal])
+--				VALUES(@tillButik, @produktNummer, @antal);
+--	END;
+--END
+--ELSE
+--BEGIN
+--	PRINT 'Inte tillräckligt många böcker i lagret'
+--END
+--GO
+
+--EXEC dbo.FlyttaBok 2,1,'9789137075764'
